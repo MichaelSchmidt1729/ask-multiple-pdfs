@@ -1,15 +1,25 @@
-# streamlit run d:/OneDrive/Dokumente/Pythonskripts/ask-multiple-pdfs/app.py 
+# streamlit run d:/OneDrive/Dokumente/Pythonskripts/ask-multiple-pdfs/app.py
+# https://www.youtube.com/watch?v=dXxQ0LR-3Hg&ab_channel=AlejandroAO-Software%26Ai
+
+
+
+# import os
+# from dotenv import load_dotenv
+# load_dotenv()
+# openai_api_key = os.getenv('OPENAI_API_KEY')
+# print(openai_api_key)
 
 import streamlit as st
+from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.embeddings import OpenAIEmbeddings, HuggingFaceInstructEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain_community.chat_models import ChatOpenAI
+from langchain.embeddings import OpenAIEmbeddings, HuggingFaceInstructEmbeddings
+from langchain.vectorstores import FAISS
+from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from htmlTemplates import css, bot_template, user_template
-from langchain_community.llms import HuggingFaceHub
+from langchain.llms import HuggingFaceHub
 
 def get_pdf_text(pdf_docs):
     text = ""
@@ -18,6 +28,7 @@ def get_pdf_text(pdf_docs):
         for page in pdf_reader.pages:
             text += page.extract_text()
     return text
+
 
 def get_text_chunks(text):
     text_splitter = CharacterTextSplitter(
@@ -29,26 +40,10 @@ def get_text_chunks(text):
     chunks = text_splitter.split_text(text)
     return chunks
 
-try:
-    import os
-    
-    from dotenv import load_dotenv
-    load_dotenv()
-    openai_api_key = os.getenv('OPENAI_API_KEY')
-    if openai_api_key is None:
-        raise ValueError("API key not found in .env file")
-except ImportError:
-    # Fallback für den Fall, dass das dotenv-Paket nicht installiert ist
-    print("dotenv not installed, trying to get the API key from Colab secrets")
-    from google.colab import secrets
-    openai_api_key = secrets.get_secret('OPENAI_API_KEY')
-except ValueError as e:
-    # Handle the case where the .env file does not have the API key
-    print(e)
 
 def get_vectorstore(text_chunks):
-    embeddings = OpenAIEmbeddings(openai_api_key)
-    # embeddings = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-xl") # Alternativ wenn nicht über OpenAI. Sehr langsam
+    embeddings = OpenAIEmbeddings()
+    # embeddings = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-xl")
     vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
     return vectorstore
 
@@ -81,6 +76,7 @@ def handle_userinput(user_question):
 
 
 def main():
+    load_dotenv()
     st.set_page_config(page_title="Chat with multiple PDFs",
                        page_icon=":books:")
     st.write(css, unsafe_allow_html=True)
